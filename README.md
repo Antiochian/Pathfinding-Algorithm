@@ -11,6 +11,15 @@ Features:
 
 Note: The traceback feature isn't perfect and has some issues I have yet to iron out
 
+Gallery:
+---
+|*Simple routing example*|*On-the-fly readjustment*|
+|:--:|:---:|
+|![gif](Hello_test.gif)|![gif](redirect_test.gif)
+
+**Large scale test**
+![gif](big_maze_test.gif)
+
 How to use:
 ----
 To play with this, clone the repo and run "driver.py".
@@ -18,6 +27,7 @@ Press space to pause/unpause the algorithm.
 Leftclick places/removes walls, and can be done at any time.
 
 Note: The program will refuse to run if the maze is impossible.
+
 
 Notes
 ----
