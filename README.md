@@ -9,7 +9,7 @@ Features:
 4. Capable of rerouting on-the-fly in response to user input
 5. Traceback feature
 
-Note: The traceback feature has some issues when the algorithm is rerouted mid-flow by a user-placed wall which I still need to iron out
+Note: The traceback feature isn't perfect and has some issues I have yet to iron out
 
 How to use:
 ----
