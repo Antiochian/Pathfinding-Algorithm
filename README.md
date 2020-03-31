@@ -17,6 +17,8 @@ To play with this, clone the repo and run "driver.py".
 Press space to pause/unpause the algorithm.
 Leftclick places/removes walls, and can be done at any time.
 
+Note: The program will refuse to run if the maze is impossible.
+
 Notes
 ----
 The main driver function, ```driver.py``` handles all the animation and contains the core loop/actual algorithm. The algorithm itsself is completely generalised to an abritrary number of dimensions, depending only on the ```Cell``` objects definition of "neighbourhood", but the visualiser program is 2D only.
