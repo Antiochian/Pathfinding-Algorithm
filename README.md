@@ -1,5 +1,5 @@
 # Pathfinding-Algorithm
-A visual implementation of A* Pathfinding algorithm in pygame
+A visual implementation of the A* Pathfinding algorithm in pygame, with interactivity
 
 Features:
 ----
@@ -25,10 +25,7 @@ How to use:
 ----
 To play with this, clone the repo and run "driver.py".
 Press space to pause/unpause the algorithm.
-Leftclick places/removes walls, and can be done at any time.
-
-Note: The program will refuse to run if the maze is impossible.
-
+Leftclick places/removes walls, and can be done at any time. Right click moves the starting location to the chosen square.
 
 Notes
 ----
