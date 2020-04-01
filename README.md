@@ -9,16 +9,17 @@ Features:
 4. Capable of rerouting on-the-fly in response to user input
 5. Traceback feature
 
-Note: The traceback feature isn't perfect and has some issues I have yet to iron out
+Note: The traceback feature isn't perfect when the algorithm is forced to reroute mid-execution
 
 Gallery:
 ---
-|*Simple routing example*|*On-the-fly readjustment*|
-|:--:|:---:|
-|![gif](Hello_test.gif)|![gif](redirect_test.gif)
+|*Simple example*|*Drawing functionality*|*On-the-fly readjustment*|
+|:--:|:---:|:---:|
+|![gif](small_test_2.gif)|![gif](small_test.gif)|![gif](redirect_test.gif)|
 
-**Large scale test**
-![gif](big_maze_test.gif)
+|*Worst Case Example:*|*Large Scale Traceback Example*
+|:---:|:---:
+|![gif](worst_case_test.gif)|![gif](big_maze.gif)
 
 How to use:
 ----
