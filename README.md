@@ -4,7 +4,7 @@ A visual implementation of A* Pathfinding algorithm in pygame
 Features:
 ----
 1. A* Pathfinding implementation
-2. Left click to place/remove barriers
+2. Left click to place/remove barriers, Right click to move starting location
 3. Pauseable with spacebar
 4. Capable of rerouting on-the-fly in response to user input
 5. Traceback feature
