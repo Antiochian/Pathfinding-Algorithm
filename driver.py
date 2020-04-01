@@ -3,13 +3,10 @@
 Created on Mon Mar 30 22:21:57 2020
 
 @author: Antiochian
-
-Note: lots of vestigial code here. Need to clean up.
 """
 
 
 #2D pathfinding algorithm
-import numpy as np
 import pygame
 import sys
 import random
@@ -31,75 +28,74 @@ colordict = {
     }
 
 constants = {
-    'TILESIZE' : 18,
-    'MARGIN' : 2,
-    'X' :24,
-    'Y' : 24,
+    'TILESIZE' : 30,
+    'MARGIN' : 3,
+    'X' :20,
+    'Y' : 20,
     'FPS' : 30,
-    'SEARCH_SPEED' : 10,
-    'COLORS' : colordict
+    'SEARCH_SPEED' : 15,
+    'COLORS' : colordict,
+    'GOALPOS' : (18,5),
+    'STARTPOS' :(2,5)
     }
 
 #-------- A* ALGORITHM IMPLEMENTATION -----------
 
-def choose_next(OPEN, GOALPOS):
+def choose_next(OPEN):
+    """
+    Given list of choices OPEN, choose the one with lowest f_cost (lowest h_cost as a tiebreak)
+    """
     best = OPEN[0]
     for cell in OPEN[1:]:
         if cell.f_cost < best.f_cost:
             best = cell
         elif cell.f_cost == best.f_cost:
-            if cell.actual_distance(GOALPOS) < best.actual_distance(GOALPOS):
+            if cell.h_cost < best.h_cost:
                 best = cell
     return best
     
 def algorithm_tick(OPEN,CLOSED,cell_list, surface, GOALPOS): 
-    current = choose_next(OPEN,GOALPOS)
-    if current.istarget: 
-        return  [], CLOSED, current #end early, we are already done
+    """"The actual A* Algorithm itsself"""
+    current = choose_next(OPEN)
     OPEN.remove(current)
     CLOSED.append(current)
-    current.update('closed', surface)   
+    current.update('closed',surface)
+    if current.istarget:
+        return [], CLOSED, current
+    
     for neighbour in current.neighbours:
-        if neighbour.status == 'blocked':
+        if neighbour.status == 'blocked' or neighbour in CLOSED:
             pass
-        elif neighbour in CLOSED:   
-            if neighbour.get_f():
-                current.parent = neighbour  
-        elif neighbour in OPEN:
-            if neighbour.get_g(current):
-                neighbour.parent = current
-            neighbour.get_f() 
-        else:
-            OPEN.append(neighbour)
-            neighbour.update('active',surface)
+        elif neighbour.get_g(current) or (neighbour not in OPEN):
+            neighbour.parent = current
+            if neighbour not in OPEN:
+                neighbour.update('active',surface)
+                OPEN.append(neighbour)
     return OPEN, CLOSED, current
-
 
 # ---------- SETUP OF GRID/PYGAME ENGINE ------------
 
 def initial_setup(surface, STARTPOS,GOALPOS,cell_list, obstacle_list): 
+    #intialise cell values, treat start and goal cells specially
     t0 = time.time()
     cell_list = decorate_grid(surface, cell_list,obstacle_list)
     cell_list[GOALPOS].istarget = True 
-    cell_list[GOALPOS].draw_cell(surface)
-    cell_list = populate_h_values(cell_list, GOALPOS)    
+    cell_list[GOALPOS].draw_cell(surface)    
              
     for cell in cell_list:
-        cell_list[cell].g_cost = math.inf
+        cell_list[cell].get_h(GOALPOS)
     cell_list[STARTPOS].g_cost = 0
     cell_list[STARTPOS].get_f()
-    print("Initial setup in ",round(time.time()-t0,3)," seconds")
-    return cell_list
-
-def populate_h_values(cell_list, GOALPOS):
-    for cell in cell_list:
-        cell_list[cell].h_cost = cell_list[cell].actual_distance(GOALPOS)
+    #print("Initial setup in ",round(time.time()-t0,3)," seconds")
     return cell_list
 
 def refresh_cell_list(STARTPOS, GOALPOS, obstacle_list, surface, constants, cell_list, clean=True):
+    #reset simulation
     if clean:
+        #completely wipe everything
         cell_list = make_grid(constants,surface )
     else:
+        #retain existing grid/obstacle_list
         for cell in cell_list:
             if cell_list[cell].status == 'start':
                 cell_list[cell].update('closed',surface)
@@ -111,18 +107,17 @@ def refresh_cell_list(STARTPOS, GOALPOS, obstacle_list, surface, constants, cell
 # --------------- ANIMATION LOOPS ----------------
 
 def draw_mode(clock,surface,initial_coord, constants, cell_list, obstacle_list):
+    #while the user is pressing a mousebutton, draw walls/spaces accordingly
     FPS = constants['FPS']
     mouse_mode = cell_list[initial_coord].status
     if mouse_mode == 'blocked':
-        mouse_mode = 'empty'
-        target_modes = ('blocked')
+        mouse_mode = 'empty' #tile you will draw
+        target_modes = ('blocked') #tiles you are allowed to overwrite
     else:
         mouse_mode = 'blocked' #readability
-        target_modes = ('empty', 'active', 'closed') #tiles you are allowed to draw on
-
-
+        target_modes = ('empty', 'active', 'closed')
     changed = []
-    prevcoord = None
+    prevcoord = None #keep track if mouse has changed tile or not
     while True:
         clock.tick(FPS)
         mousepos = pygame.mouse.get_pos()
@@ -139,9 +134,11 @@ def draw_mode(clock,surface,initial_coord, constants, cell_list, obstacle_list):
                     cell_list[coord].update('empty',surface)
         for event in pygame.event.get():
             if event.type == pygame.MOUSEBUTTONUP:
+                #when user lets go of mouse button
                 return obstacle_list
 
 def search_animation(cell_list, screen, constants,clock, obstacle_list, STARTPOS, GOALPOS):
+    #the beefiest animation loop, showing the algorithm doing its thing
     OPEN = [cell_list[STARTPOS]]
     current = cell_list[STARTPOS]
     CLOSED = []
@@ -152,48 +149,46 @@ def search_animation(cell_list, screen, constants,clock, obstacle_list, STARTPOS
     frac = 0 #fraction of a frame
     while True:
         clock.tick(FPS)
-        frac = (frac+1)%(FPS//search_speed)
+        frac = (frac+1)%(FPS//search_speed) #regulates animation speed to slow it down
         
         for event in pygame.event.get(): #detect events
-            if event.type == pygame.QUIT or pygame.key.get_pressed()[27]: #exit or ESCAPE keypress
+            if event.type == pygame.QUIT or pygame.key.get_pressed()[27]: #exit or ESCAPE keypress to quit
                 pygame.quit()
                 sys.exit() 
             if event.type == pygame.MOUSEBUTTONDOWN:
                 mousepos = pygame.mouse.get_pos()
                 mousecoords = mousepos[0]//constants['TILESIZE'] ,mousepos[1]//constants['TILESIZE']
-                if event.button == 3: #RIGHT CLICK
+                if event.button == 3: #RIGHT CLICK to move start tile
                     cell_list[STARTPOS].update('empty',screen)
                     cell_list[mousecoords].update('start',screen)
                     STARTPOS = mousecoords
                     pending_changes = True
-                elif event.button == 1: #LEFT CLICK
+                elif event.button == 1: #LEFT CLICK to draw
                     #get new obstacle_list    
                     obstacle_list = draw_mode(clock,screen,mousecoords, constants, cell_list,obstacle_list)
                     STARTPOS = current.pos
                     #refresh cell list
                     pending_changes = True
                 
-            if pygame.key.get_pressed()[32]: #SPACE BAR keypress
-                searching = not searching #alternate pause/play
-                print("Searching: ", searching)
+            if pygame.key.get_pressed()[32]: #SPACE BAR keypress to pause/play
+                searching = not searching
+                print("Paused: ", not searching)
         
         if searching and pending_changes:
             pending_changes = False
             cell_list = refresh_cell_list(STARTPOS, GOALPOS, obstacle_list, screen, constants, cell_list, False)
             OPEN = [cell_list[STARTPOS]]
-            CLOSED = []
-            # pygame.display.flip()
+            CLOSED = []     
         #ALGORITHM CODE GOES HERE
         if searching and not frac:
             OPEN, CLOSED, current = algorithm_tick(OPEN,CLOSED,cell_list, screen, GOALPOS)                     
-        
-        #pygame.display.flip() we actually dont need this, amazingly
         if not OPEN:
             return cell_list, current, obstacle_list
 
 def traceback_animation(final_cell, surface, constants, clock):
+    #follow back shortest path
     FPS = constants['FPS']
-    playback_speed = constants['SEARCH_SPEED'] * 3
+    playback_speed = FPS
     current = final_cell
     frac = 0 #fraction of a frame
     seen = []
@@ -208,6 +203,7 @@ def traceback_animation(final_cell, surface, constants, clock):
     return
 
 def wait_for_input(clock):
+    #timewaster loop
     while True:
         clock.tick(120)
         for event in pygame.event.get(): #detect events
@@ -228,19 +224,19 @@ def main(constants):
     pygame.display.set_caption("Pathfinder")
     clock = pygame.time.Clock()
     cell_list = make_grid(constants,screen)
-    # #add terrain
-    STARTPOS = (3,3)
-    GOALPOS = (20,20)
+    STARTPOS = constants['STARTPOS']
+    GOALPOS = constants['GOALPOS']
     obstacle_list = []
     #MANUAL DEBUG OBSTACLES
-    for y in range(1,6):
-        obstacle_list.append((4,y))
-    for y in range(5,11):
-        obstacle_list.append((6,y))
+    # for y in range(7,14):
+    #     obstacle_list.append((10,y))
+    #     pass
+    # for y in range(5,11):
+    #     obstacle_list.append((6,y))
     cell_list = initial_setup(screen, STARTPOS,GOALPOS,cell_list, obstacle_list)
     cell_list[STARTPOS].update('start',screen)        
     while True:
-        #flip between 3 mainloops
+        #cycle between mainloops
         cell_list, final_cell, obstacle_list = search_animation(cell_list,screen,constants,clock, obstacle_list, STARTPOS, GOALPOS)
         traceback_animation(final_cell, screen, constants,clock)
         wait_for_input(clock)
